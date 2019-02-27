@@ -1,0 +1,3 @@
+Canonical Huffman: 0.845
+Adaptive Huffman:  0.845
+RLE:               1.894
