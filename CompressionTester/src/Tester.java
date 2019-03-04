@@ -60,6 +60,11 @@ public class Tester {
 			baseCmd = "java -cp \""+program.getParentFile()+"\" "+name;
 			System.out.println("Running program with: "+baseCmd+" <input file> <output file>\n");
 			
+		}else if(getExtension(program).equals("bat")){
+			
+			baseCmd = "\""+program.getAbsolutePath()+"\"";
+			System.out.println("Running program with: "+baseCmd+" <input file> <output file>\n");
+			
 		}else{
 			throw new IllegalArgumentException(getExtension(program)+" files are currently unsupported.");
 		}
@@ -135,7 +140,7 @@ public class Tester {
 	 * Thanks to StackOverflow user aioobe.
 	 * https://stackoverflow.com/questions/3758606/how-to-convert-byte-size-into-human-readable-format-in-java
 	 * @param bytes the number of bytes to display
-	 * @param si whether to divide by multiples of 1,000 (true), or multiple of 1,024 (false)
+	 * @param si whether to divide by multiples of 1,000 (true), or multiples of 1,024 (false)
 	 * @return a human-readable string representing the given number of bytes.
 	 */
 	public static String humanReadableByteCount(long bytes, boolean si) {

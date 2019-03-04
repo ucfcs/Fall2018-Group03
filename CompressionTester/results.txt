@@ -1,3 +1,9 @@
 Canonical Huffman: 0.845
 Adaptive Huffman:  0.845
 RLE:               1.894
+
+WinRAR -m1:        0.715
+WinRAR -m2:        0.689
+WinRAR -m3:        0.683
+WinRAR -m4:        0.683
+WinRAR -m5:        0.682
