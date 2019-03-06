@@ -1,0 +1,10 @@
+#compression algorithms
+c:\whatever\winrar.bat <input> <output>
+c:\whatever\zlib.exe <input> <output>
+c:\whatever\rar.exe a -m5 <output> <input>
+
+#symbol coder
+java -cp "c:\users\whatever\bin" Huffman.class <input> <output>
+
+
+prog.replace("<input>",inputPath)
