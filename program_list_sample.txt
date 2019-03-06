@@ -1,10 +1,17 @@
 #compression algorithms
 c:\whatever\winrar.bat <input> <output>
 c:\whatever\zlib.exe <input> <output>
-c:\whatever\rar.exe a -m5 <output> <input>
+
+#WinRAR modes
+c:\whatever\rar.exe a -m1 <output> <input> #fast
+c:\whatever\rar.exe a -m2 <output> <input>
+c:\whatever\rar.exe a -m3 <output> <input>
+c:\whatever\rar.exe a -m4 <output> <input>
+c:\whatever\rar.exe a -m5 <output> <input> #best
 
 #symbol coder
-java -cp "c:\users\whatever\bin" Huffman.class <input> <output>
+java -cp "c:\users\whatever\bin" Huffman <input> <output>
 
-
-prog.replace("<input>",inputPath)
+cmd = in.nextLine();
+cmd = cmd.substring(0,cmd.indexOf('#'));
+cmd.replace("<input>",inputPath)
