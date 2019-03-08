@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Scanner;
 
 /**
  * Tests out a compression program on a number of input files.
@@ -42,42 +43,20 @@ public class Tester {
 		inputPath = args[1];
 		outputPath = args[2];
 		
-		File program = new File(progPath);
-		if(!program.exists()){
+		File programList = new File(progPath), input = new File(inputPath), output = new File(outputPath);
+
+		if(!programList.exists()){
 			throw new FileNotFoundException("Program file \""+progPath+"\"\ndoes not exist.");
 		}
-		if(!program.canExecute()){
-			throw new IOException("Program file \""+progPath+"\"\ncannot be executed.");
+		if(!programList.canRead()){
+			throw new IOException("Cannot read program file \""+progPath+"\".");
 		}
-		
-		String baseCmd = "";
-		
-		if(getExtension(program).equals("class")){
-			
-			String name = program.getName();
-			name = name.substring(0,name.length()-6);
-			
-			baseCmd = "java -cp \""+program.getParentFile()+"\" "+name;
-			System.out.println("Running program with: "+baseCmd+" <input file> <output file>\n");
-			
-		}else if(getExtension(program).equals("bat")){
-			
-			baseCmd = "\""+program.getAbsolutePath()+"\"";
-			System.out.println("Running program with: "+baseCmd+" <input file> <output file>\n");
-			
-		}else{
-			throw new IllegalArgumentException(getExtension(program)+" files are currently unsupported.");
-		}
-		
-		File input = new File(inputPath), output = new File(outputPath);
-
 		if(!input.exists()){
 			throw new FileNotFoundException("Input directory does not exist");
 		}
 		if(!input.isDirectory()){
 			throw new IllegalArgumentException("Input must be directory");
 		}
-		
 		if(!output.exists() && !output.mkdir()){
 			throw new IOException("Could not create output directory");
 		}
@@ -85,47 +64,89 @@ public class Tester {
 			throw new IllegalArgumentException("Output must be directory");
 		}
 		
-		double avg = 0.0;
-		int successCount = 0;
+		Scanner in = new Scanner(programList);
+		int line;
 		
-		for(File f : input.listFiles()){
+		for(line=1; in.hasNextLine(); line++){
 			
-			System.out.println("Compressing "+f.getName()+"...");
-			File out = new File(outputPath+File.separator+f.getName()+".out");
+			String baseCmd = parse(in.nextLine());
 			
-			long originalSize = f.length(), compressedSize;
-			System.out.printf("Original size: %s\n",humanReadableByteCount(originalSize,false));
+			if(baseCmd.length()==0) //line is blank or a comment
+				continue;
 			
-			String cmd = baseCmd+" \""+f.getPath()+"\" \""+out.getPath()+"\"";
-			//System.out.println("cmd: "+cmd);
-			
-			Process p = Runtime.getRuntime().exec(cmd);
-			p.waitFor(); //This is a top-level concurrent programming technique. Don't even ATTEMPT to understand it.
-			
-			if(p.exitValue()!=0){
-				System.out.println("...but something went wrong!");
-				System.out.println();
+			if(!baseCmd.contains("<input>") || !baseCmd.contains("<output>")){
+				System.out.println("Malformed command on line "+line+"!");
 				continue;
 			}
 			
-			if(out.exists()){
-				successCount++;
-				compressedSize = out.length();
-				double ratio = (double)compressedSize/originalSize;
-				avg += ratio;
-				System.out.println("Compressed size: "+humanReadableByteCount(compressedSize,false));
-				System.out.printf("Compression ratio: %.3f\n",ratio);
-			}else{
-				System.out.println("Program did not output the expected file!");
+			System.out.printf("Running testbench on line %d:\n%s\n\n",line,baseCmd);
+			
+			double avg = 0.0;
+			int successCount = 0;
+			for(File f : input.listFiles()){
+				
+				if(f.isDirectory()){ //Tester does not recurse as of right now
+					//System.out.printf("Encountered directory %s.\n\n",f.getName());
+					continue;
+				}
+				
+				//System.out.println("Compressing "+f.getName()+"...");
+				File out = new File(outputPath+File.separator+f.getName()+".out");
+				out.delete();
+				
+				long originalSize = f.length(), compressedSize;
+				//System.out.printf("Original size: %s\n",humanReadableByteCount(originalSize,false));
+				
+				//String cmd = baseCmd+" \""+f.getPath()+"\" \""+out.getPath()+"\"";
+				String cmd = baseCmd.replace("<input>", '"'+f.getPath()+'"').replace(
+						"<output>", '"'+out.getPath()+'"');
+				//System.out.println("cmd: "+cmd);
+				
+				Process p = Runtime.getRuntime().exec(cmd);
+				p.waitFor(); //This is a top-level concurrent programming technique. Don't even ATTEMPT to understand it.
+				
+				if(p.exitValue()!=0){
+					System.out.printf("Runtime error (%d) encountered when compressing %s!\n",p.exitValue(),f.getName());
+					System.out.println();
+					continue;
+				}
+				
+				if(out.exists()){
+					successCount++;
+					compressedSize = out.length();
+					//double ratio = (double)compressedSize/originalSize;
+					double ratio = (double)originalSize/compressedSize;
+					avg += ratio;
+					
+					//OUTPUT DATA TO CSV HERE
+					//Or, add to a queue and output the whole row to csv later?
+					
+					//System.out.println("Compressed size: "+humanReadableByteCount(compressedSize,false));
+					//System.out.printf("Compression ratio: %.3f\n",ratio);
+				}else{
+					System.out.println("Program did not output the expected file when compressing "+f.getName()+"!");
+				}
+				
 			}
 			
-			System.out.println();
+			System.out.println("Done.\n");
+			System.out.printf("Average smallness increasment factor: %.3f\n\n\n", avg/successCount);
 			
 		}
 		
-		System.out.println("Done.\n");
-		System.out.printf("Average compression ratio: %.3f\n",avg/successCount);
+		System.out.println("All done!");
 			
+	}
+	
+	public static String parse(String str){
+		int octoIndex = str.indexOf('#'); //it's an octothorpe, you fucking idiot
+		if(octoIndex>=0)
+			str = str.substring(0,octoIndex);
+		
+		int start = 0, end = str.length()-1;
+		for(;start<str.length() && str.charAt(start)==' ';start++);
+		for(;end>=0 && str.charAt(end)==' ';end--);
+		return end<0 ? "" : str.substring(start,end+1);
 	}
 	
 	public static String getExtension(File file){
@@ -136,8 +157,8 @@ public class Tester {
 	}
 	
 	/**
-	 * A nifty little to string method for displaying file sizes. It's entirely self-contained!
-	 * Thanks to StackOverflow user aioobe.
+	 * A nifty little tostring method for displaying file sizes. It's entirely self-contained!
+	 * Thanks to StackOverflow user aioobe. <br/>
 	 * https://stackoverflow.com/questions/3758606/how-to-convert-byte-size-into-human-readable-format-in-java
 	 * @param bytes the number of bytes to display
 	 * @param si whether to divide by multiples of 1,000 (true), or multiples of 1,024 (false)
@@ -151,10 +172,8 @@ public class Tester {
 	    return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
 	}
 	
-	public static void printUsage(){
-		
-		System.out.println("Usage is <program> <input directory> <output directory>");
-		
+	public static void printUsage(){	
+		System.out.println("Usage is:\njava Tester <program> <input directory> <output directory>");
 	}
 	
 }
