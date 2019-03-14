@@ -119,7 +119,7 @@ public class Tester {
 					avg += ratio;
 					
 					//OUTPUT DATA TO CSV HERE
-					//Or, add to a queue and output the whole row to csv later?
+					//writeToCSV()
 					
 					//System.out.println("Compressed size: "+humanReadableByteCount(compressedSize,false));
 					//System.out.printf("Compression ratio: %.3f\n",ratio);
@@ -174,6 +174,21 @@ public class Tester {
 	
 	public static void printUsage(){	
 		System.out.println("Usage is:\njava Tester <program> <input directory> <output directory>");
+	}
+	
+
+	public static void writeToCSV(String program, String fileName, long originalSize, long compressedSize) throws IOException{
+		File temp = new File("results.csv");
+		if(!temp.exists()){
+			FileWriter writer = new FileWriter("results.csv");
+			writer.write("Program,File,Original Size, Compressed Size, Compression Ratio\n");
+			writer.close();
+		}
+		else{
+			FileWriter writer = new FileWriter("results.csv", true);
+			writer.write(program+","+fileName+","+originalSize+","+compressedSize+","+(compressedSize/originalSize)+"\n");
+			writer.close();
+		}
 	}
 	
 }
