@@ -1,0 +1,22 @@
+#Write comments with an octothorpe!
+#Use #:name to specify a human-readable name for your program.
+#Tester will use the command as a name if you don't specify one.
+
+#:name RLE compress
+java -cp bin RLECompress <input> <output>
+#:name Canonical Huffman
+java -cp C:\Users\Ryan\workspace\HuffmanStuffman\bin HuffmanCompress <input> <output>
+#:name Adaptive Huffman
+java -cp C:\Users\Ryan\workspace\HuffmanStuffman\bin AdaptiveHuffmanCompress <input> <output>
+
+#WinRAR levels
+#:name WinRAR m1
+"C:\Program Files\WinRAR\rar.exe" a -m1 <output> <input>
+#:name WinRAR m2
+"C:\Program Files\WinRAR\rar.exe" a -m2 <output> <input>
+#:name WinRAR m3
+"C:\Program Files\WinRAR\rar.exe" a -m3 <output> <input>
+#:name WinRAR m4
+"C:\Program Files\WinRAR\rar.exe" a -m4 <output> <input>
+#:name WinRAR m5
+"C:\Program Files\WinRAR\rar.exe" a -m5 <output> <input>

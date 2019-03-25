@@ -1,17 +1,17 @@
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
 
 /**
- * Tests out a compression program on a number of input files.
- * The program should be an executable file that takes two command line arguments:
- * the input file and the output file. Tester will run it with every file in the input
- * DIRECTORY you specify, and have it spit them out in the output directory you specify.
- * The program must not be a directory, but rather a single file.
- * 
- * Currently supported filetypes:
- * 	-.class (Java)
+ * Tests out a list of compression programs on a file corpus.
+ * Each program to be run is specified as a single-line command in a text file.
+ * The strings <input> and <output> will be replaced with a file from the corpus, 
+ * and a temp file for the output.
+ * Tester will run each program with every file in the input DIRECTORY you specify (the corpus),
+ * and have it spit them out in the output directory you specify.
  * 
  * Note that Tester does NOT currently iterate subdirectories. Be sure to put all your
  * input files in the same directory.
@@ -24,13 +24,14 @@ import java.util.Scanner;
  * 
  * Usage for Tester is as follows:
  * 
- * java Tester <program> <input directory> <output directory>
+ * java Tester <program list> <input directory> <output directory>
  * 
  * @author Ryan Beck
  */
 public class Tester {
 	
-	static String progPath, inputPath, outputPath;
+	static String progPath, inputPath, outputPath, progName;
+	static FileWriter csvWriter;
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
 		
@@ -63,6 +64,8 @@ public class Tester {
 		if(!output.isDirectory()){
 			throw new IllegalArgumentException("Output must be directory");
 		}
+
+		openCSV("results.csv");
 		
 		Scanner in = new Scanner(programList);
 		int line;
@@ -74,12 +77,16 @@ public class Tester {
 			if(baseCmd.length()==0) //line is blank or a comment
 				continue;
 			
+			if(progName==null)
+				progName = baseCmd;
+			
 			if(!baseCmd.contains("<input>") || !baseCmd.contains("<output>")){
 				System.out.println("Malformed command on line "+line+"!");
+				progName = null;
 				continue;
 			}
 			
-			System.out.printf("Running testbench on line %d:\n%s\n\n",line,baseCmd);
+			System.out.printf("Running testbench on line %d:\n%s\n%s\n\n",line,baseCmd,progName==null ? "(No name)" : ("Name: "+progName));
 			
 			double avg = 0.0;
 			int successCount = 0;
@@ -107,7 +114,12 @@ public class Tester {
 				
 				if(p.exitValue()!=0){
 					System.out.printf("Runtime error (%d) encountered when compressing %s!\n",p.exitValue(),f.getName());
+					System.out.println("The error stream had this to say:");
+					Scanner err = new Scanner(p.getErrorStream());
+					while(err.hasNextLine())
+						System.out.println(err.nextLine());
 					System.out.println();
+					err.close();
 					continue;
 				}
 				
@@ -119,7 +131,7 @@ public class Tester {
 					avg += ratio;
 					
 					//OUTPUT DATA TO CSV HERE
-					//writeToCSV()
+					writeToCSV(progName, f.getName(), originalSize, compressedSize);
 					
 					//System.out.println("Compressed size: "+humanReadableByteCount(compressedSize,false));
 					//System.out.printf("Compression ratio: %.3f\n",ratio);
@@ -131,22 +143,41 @@ public class Tester {
 			
 			System.out.println("Done.\n");
 			System.out.printf("Average smallness increasment factor: %.3f\n\n\n", avg/successCount);
+			writeToCSV(progName, avg/successCount);
+			progName = null;
 			
 		}
 		
 		System.out.println("All done!");
+		in.close();
+		closeCSV();
 			
 	}
 	
-	public static String parse(String str){
-		int octoIndex = str.indexOf('#'); //it's an octothorpe, you fucking idiot
-		if(octoIndex>=0)
-			str = str.substring(0,octoIndex);
-		
+	public static String clamp(String str){
 		int start = 0, end = str.length()-1;
 		for(;start<str.length() && str.charAt(start)==' ';start++);
 		for(;end>=0 && str.charAt(end)==' ';end--);
 		return end<0 ? "" : str.substring(start,end+1);
+	}
+	
+	public static String parse(String str){
+		int octoIndex = str.indexOf('#'); //it's an octothorpe, you fucking idiot
+		String cmd = str, comment = "";
+		if(octoIndex>=0){
+			cmd = str.substring(0,octoIndex);
+			comment = str.substring(octoIndex+1,str.length());
+		}
+		
+		cmd = clamp(cmd);
+		comment = clamp(comment);
+		int nameIndex = comment.indexOf(":name ");
+		if(nameIndex>=0){
+			progName = comment.substring(nameIndex+6, comment.length());
+		}
+		
+		return cmd;
+		
 	}
 	
 	public static String getExtension(File file){
@@ -173,22 +204,29 @@ public class Tester {
 	}
 	
 	public static void printUsage(){	
-		System.out.println("Usage is:\njava Tester <program> <input directory> <output directory>");
+		System.out.println("Usage is:\njava Tester <program list> <input directory> <output directory>");
 	}
 	
-
+	private static void openCSV(String path) throws IOException{
+		csvWriter = new FileWriter(path,false); //DON'T append to end of file
+		csvWriter.write("Program, File, Original Size, Compressed Size, Compression Ratio\n"); //header
+	}
+	
+	private static void closeCSV() throws IOException{
+		csvWriter.close();
+		csvWriter = null;
+	}
+	
+	public static void writeToCSV(String program, double avg) throws IOException{
+		if(csvWriter==null)
+			openCSV("results.csv");
+		csvWriter.write(program+",Average, , ,"+avg+"\n");
+	}
+	
 	public static void writeToCSV(String program, String fileName, long originalSize, long compressedSize) throws IOException{
-		File temp = new File("results.csv");
-		if(!temp.exists()){
-			FileWriter writer = new FileWriter("results.csv");
-			writer.write("Program,File,Original Size, Compressed Size, Compression Ratio\n");
-			writer.close();
-		}
-		else{
-			FileWriter writer = new FileWriter("results.csv", true);
-			writer.write(program+","+fileName+","+originalSize+","+compressedSize+","+(compressedSize/originalSize)+"\n");
-			writer.close();
-		}
+		if(csvWriter==null)
+			openCSV("results.csv");
+		csvWriter.write(program+","+fileName+","+humanReadableByteCount(originalSize,false)+","+humanReadableByteCount(compressedSize,false)+","+((double)originalSize/compressedSize)+"\n");
 	}
 	
 }
