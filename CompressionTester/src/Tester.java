@@ -1,8 +1,11 @@
-import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.Scanner;
 
 /**
@@ -97,9 +100,15 @@ public class Tester {
 					continue;
 				}
 				
-				//System.out.println("Compressing "+f.getName()+"...");
+				System.out.println("Compressing "+f.getName()+"...");
 				File out = new File(outputPath+File.separator+f.getName()+".out");
-				out.delete();
+				if(out.exists()){
+					try{
+						Files.delete(out.toPath()); //Files.delete throws an exception when it can't be deleted! I want that.
+					}catch(IOException e){
+						System.out.println("Could not delete old output file; "+e.getMessage());
+					}
+				}
 				
 				long originalSize = f.length(), compressedSize;
 				//System.out.printf("Original size: %s\n",humanReadableByteCount(originalSize,false));
@@ -110,6 +119,7 @@ public class Tester {
 				//System.out.println("cmd: "+cmd);
 				
 				Process p = Runtime.getRuntime().exec(cmd);
+				gobble(p.getInputStream()); //might need to gobble p.getErrorStream() as well.
 				p.waitFor(); //This is a top-level concurrent programming technique. Don't even ATTEMPT to understand it.
 				
 				if(p.exitValue()!=0){
@@ -152,6 +162,12 @@ public class Tester {
 		in.close();
 		closeCSV();
 			
+	}
+	
+	//om nom nom
+	public static void gobble(InputStream input) throws IOException{
+		BufferedReader in = new BufferedReader(new InputStreamReader(input));
+		while(in.readLine()!=null);
 	}
 	
 	public static String clamp(String str){
