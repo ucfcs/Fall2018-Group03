@@ -2,12 +2,20 @@
 #Use #:name to specify a human-readable name for your program.
 #Tester will use the command as a name if you don't specify one.
 
-#:name RLE compress
+#:name Basic RLE
 java -cp bin RLECompress <input> <output>
+#:name PackBits
+java -cp C:\Users\Ryan\workspace\CompressionTester\bin GoodPackBits <input> <output>
+#:name NOPless PackBits
+java -cp C:\Users\Ryan\workspace\CompressionTester\bin GoodPackBits -nopless <input> <output>
+
 #:name Canonical Huffman
 java -cp C:\Users\Ryan\workspace\HuffmanStuffman\bin HuffmanCompress <input> <output>
 #:name Adaptive Huffman
 java -cp C:\Users\Ryan\workspace\HuffmanStuffman\bin AdaptiveHuffmanCompress <input> <output>
+
+#:name Razor
+C:\Users\Ryan\Bellows\e-razor\rz a <output> <input>
 
 #WinRAR levels
 #:name WinRAR m1

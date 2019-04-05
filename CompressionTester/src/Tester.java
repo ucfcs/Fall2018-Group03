@@ -89,7 +89,7 @@ public class Tester {
 				continue;
 			}
 			
-			System.out.printf("Running testbench on line %d:\n%s\n%s\n\n",line,baseCmd,progName==null ? "(No name)" : ("Name: "+progName));
+			System.out.printf("Running testbench line %d:\n%s\n%s\n\n",line,baseCmd,progName==null ? "(No name)" : ("Name: "+progName));
 			
 			double avg = 0.0;
 			int successCount = 0;
@@ -107,6 +107,7 @@ public class Tester {
 						Files.delete(out.toPath()); //Files.delete throws an exception when it can't be deleted! I want that.
 					}catch(IOException e){
 						System.out.println("Could not delete old output file; "+e.getMessage());
+						System.exit(1);
 					}
 				}
 				
@@ -145,6 +146,7 @@ public class Tester {
 					
 					//System.out.println("Compressed size: "+humanReadableByteCount(compressedSize,false));
 					//System.out.printf("Compression ratio: %.3f\n",ratio);
+					System.out.printf("Ratio: %.3f\n",ratio);
 				}else{
 					System.out.println("Program did not output the expected file when compressing "+f.getName()+"!");
 				}
