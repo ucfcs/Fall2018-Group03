@@ -91,7 +91,7 @@ public class Tester {
 			
 			System.out.printf("Running testbench line %d:\n%s\n%s\n\n",line,baseCmd,progName==null ? "(No name)" : ("Name: "+progName));
 			
-			double avg = 0.0;
+			double avg = 0.0, avgTime = 0.0;
 			int successCount = 0;
 			for(File f : input.listFiles()){
 				
@@ -120,8 +120,10 @@ public class Tester {
 				//System.out.println("cmd: "+cmd);
 				
 				Process p = Runtime.getRuntime().exec(cmd);
+				long time = -System.currentTimeMillis();
 				gobble(p.getInputStream()); //might need to gobble p.getErrorStream() as well.
 				p.waitFor(); //This is a top-level concurrent programming technique. Don't even ATTEMPT to understand it.
+				time += System.currentTimeMillis();
 				
 				if(p.exitValue()!=0){
 					System.out.printf("Runtime error (%d) encountered when compressing %s!\n",p.exitValue(),f.getName());
@@ -140,12 +142,14 @@ public class Tester {
 					//double ratio = (double)compressedSize/originalSize;
 					double ratio = (double)originalSize/compressedSize;
 					avg += ratio;
+					avgTime += time;
 					
 					//OUTPUT DATA TO CSV HERE
-					writeToCSV(progName, f.getName(), originalSize, compressedSize);
+					writeToCSV(progName, f.getName(), originalSize, compressedSize, time);
 					
 					//System.out.println("Compressed size: "+humanReadableByteCount(compressedSize,false));
-					//System.out.printf("Compression ratio: %.3f\n",ratio);
+					System.out.printf("Compression ratio: %.3f\n",ratio);
+					System.out.println("Time: "+humanReadableDuration(time));
 					System.out.printf("Ratio: %.3f\n",ratio);
 				}else{
 					System.out.println("Program did not output the expected file when compressing "+f.getName()+"!");
@@ -155,7 +159,7 @@ public class Tester {
 			
 			System.out.println("Done.\n");
 			System.out.printf("Average smallness increasment factor: %.3f\n\n\n", avg/successCount);
-			writeToCSV(progName, avg/successCount);
+			writeToCSV(progName, avg/successCount, avgTime/successCount);
 			progName = null;
 			
 		}
@@ -221,13 +225,21 @@ public class Tester {
 	    return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
 	}
 	
+	public static String humanReadableDuration(long t){
+		if(t<1000)
+			return t+" ms";
+		if(t<60000)
+			return String.format("%d.%d s" , t/1000, t%1000);
+		return String.format("%d m %d s", t/60000, (t%60000)/1000);
+	}
+	
 	public static void printUsage(){	
 		System.out.println("Usage is:\njava Tester <program list> <input directory> <output directory>");
 	}
 	
 	private static void openCSV(String path) throws IOException{
 		csvWriter = new FileWriter(path,false); //DON'T append to end of file
-		csvWriter.write("Program, File, Original Size, Compressed Size, Compression Ratio\n"); //header
+		csvWriter.write("Program, File, Original Size, Compressed Size, Compression Ratio, Time, Nerdy Time\n"); //header
 	}
 	
 	private static void closeCSV() throws IOException{
@@ -235,16 +247,17 @@ public class Tester {
 		csvWriter = null;
 	}
 	
-	public static void writeToCSV(String program, double avg) throws IOException{
+	public static void writeToCSV(String program, double avg, double avgTime) throws IOException{
 		if(csvWriter==null)
 			openCSV("results.csv");
-		csvWriter.write(program+",Average, , ,"+avg+"\n");
+		csvWriter.write(program+",Average, , ,"+avg+","+humanReadableDuration((long)avgTime)+","+avgTime+"\n");
 	}
 	
-	public static void writeToCSV(String program, String fileName, long originalSize, long compressedSize) throws IOException{
+	public static void writeToCSV(String program, String fileName, long originalSize, long compressedSize, long time) throws IOException{
 		if(csvWriter==null)
 			openCSV("results.csv");
-		csvWriter.write(program+","+fileName+","+humanReadableByteCount(originalSize,false)+","+humanReadableByteCount(compressedSize,false)+","+((double)originalSize/compressedSize)+"\n");
+		csvWriter.write(program+","+fileName+","+humanReadableByteCount(originalSize,false)+","+humanReadableByteCount(compressedSize,false)+","+((double)originalSize/compressedSize)+","+
+				humanReadableDuration(time)+","+time+"\n");
 	}
 	
 }
