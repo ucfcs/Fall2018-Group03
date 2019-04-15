@@ -2,13 +2,17 @@
 #include <string.h>
 #include <stdio.h>
 
+#define BLOCK 64
+
 typedef struct{
   char symbol;
   char numLess;
 }Lex;
 
-void BWT(int N, char* infile, char* outfile);
-void RBWT(int N, char* infile, char* outfile);
+
+void BWT(char* infile, char* outfile);
+void RBWT(char* infile, char* outfile);
+int cmp(char* p1, char* p2, int len);
 char* cyclicRotator(int lRotations, char* arr, int N);
 void printArr(char **arr, int N);
 int compare(const void *a, const void *b);
@@ -17,118 +21,128 @@ void printLex(Lex* finds, int size);
 int findUniq(int* matches, int size);
 Lex* initLex(Lex* finds, int size, int* matches, int N, char* L);
 
-char* symbols;
-char** strings;
-FILE *input, *output;
 
 
 int main(){
-  BWT(15, "book1.dat", "bwtbook1.dat");
-  RBWT(15, "bwtbook1.dat", "rbwtbook1.dat");
+  BWT("xml.dat", "bwtxml.dat");
+  RBWT("bwtxml.dat", "rbwtxml.dat");
 }
 
-void BWT(int N, char* infile, char* outfile){
-  int x,y, I=-1;
-  input = fopen(infile, "r");
-  output = fopen(outfile, "w");
-  char* temp = (char*)calloc(N, sizeof(char));
-  strings = (char**)calloc(N, sizeof(char*));
-  symbols = (char*)calloc(N, sizeof(char));
+void BWT(char* infile, char* outfile){
+  short x,y, I=0;
+  size_t size;
+  FILE *input, *output;
 
-  for(x=0; x<N; x++)
-    strings[x] = (char*)calloc(N, sizeof(char));
-
-while(!feof(input)){
-    //Grabs N bytes from file
-    for(x=0; x<N; x++){
-      char c = fgetc(input);
-      temp[x]=symbols[x] = c;
-    }
+  if((input = fopen(infile, "rb")) == NULL){}
+    ferror(input);
+  if((output = fopen(outfile, "wb")) == NULL)
+    ferror(output);
 
 
-    for(x=0; x<N; x++){
-      cyclicRotator(1, temp, N);
+  char original[BLOCK];
 
+  int once = 0;
+  while((size = fread(original, sizeof(char), BLOCK, input)) != 0){
 
-      for(y=0; y<N; y++)
+    char** strings = (char**)calloc(size, sizeof(char*));
+    for(x=0; x<size; x++)
+      strings[x] = (char*)calloc(size, sizeof(char));
+
+    char temp[size];
+    //Write read size to file
+    fwrite(&size, sizeof(short), 1, output);
+
+    //Copying read values to temp
+    for(x=0; x<size; x++)
+      temp[x] = original[x];
+
+    for(x=0; x<size; x++){
+      cyclicRotator(1, temp, size);
+      for(y=0; y<size; y++)
         strings[x][y] = temp[y];
     }
+
     //printArr(strings, N);
-    qsort(strings, N, sizeof(char *), compare);
+    qsort(strings, size, sizeof(char *), compare);
     //printArr(strings, N);
 
-    for(x=0; x<N; x++){
-      if(strcmp(strings[x], symbols)==0){
+    for(x=0; x<size; x++){
+      if(strcmp(strings[x], original)==0){
         I = x;
         break;
       }
     }
 
-
-    for(x=0; x<N; x++)
-      fputc(strings[x][N-1],output);
-    fprintf(output, "%d", I);
-
-
+    for(x=0; x<size; x++)
+      fwrite(&strings[x][size-1], sizeof(char), 1, output);
+    fwrite(&I, sizeof(short), 1, output);
   }
-  free(temp);
-  free(strings);
-  free(symbols);
+  // free(temp);
+  // free(strings);
+  //free(original);
   fclose(output);
   fclose(input);
 }
 
-void RBWT(int N, char* infile, char* outfile){
-  int x,y,uniq=0,I;
+
+void RBWT(char* infile, char* outfile){
+  short x,y,uniq=0,I;
   uniq=0;
-  input = fopen(infile, "r");
-  output = fopen(outfile, "w");
+  FILE *input, *output;
+
+  if((input = fopen(infile, "rb")) == NULL){}
+    ferror(input);
+  if((output = fopen(outfile, "wb")) == NULL)
+    ferror(output);
+
   Lex* finds;
-  int* matches;
-  char* L, *string;
+  short size;
 
   while(!feof(input)){
-    matches = (int*)calloc(N, sizeof(int));
-    L = (char*)calloc(N, sizeof(char));
-    string = (char*)calloc(N, sizeof(char));
 
-    for(x=0; x<N; x++)
-      L[x] = fgetc(input);
-    fscanf(input, "%d", &I);
+    fread(&size, sizeof(short), 1, input);
+    int* matches = (int*)calloc(size, sizeof(int));
+    char L[size];
+    char string[size];
+    //printf("size: %d\n", size);
 
-    for(x=0; x<N; x++)
-      printf("%c",L[x]);
-    printf(" %d\n", I);
+    fread(L, sizeof(char), size, input);
+    fread(&I, sizeof(short), 1, input);
 
-    for(x=N-1; x>=0; x--){
+    // printf("Size: %d, I: %d\n L: ",size, I);
+    // for(x=0; x<size; x++)
+    //   printf("%c", L[x]);
+    // printf("\n");
+
+    for(x=size-1; x>=0; x--){
       for(y=0; y<x; y++){
         if(L[y]==L[x])
           matches[x]++;
       }
     }
-    uniq = findUniq(matches, N);
-    printf("Unique %d\n", uniq);
-    printf("Printing matches..\n");
-    for(x=0; x<N; x++)
-      printf("%d ", matches[x]);
-    printf("\n");
+    uniq = findUniq(matches, size);
+    // printf("Unique %d\n", uniq);
+    // printf("Printing matches..\n");
+    // for(x=0; x<size; x++)
+    //   printf("%d ", matches[x]);
+    // printf("\n");
 
-    finds = initLex(finds, uniq, matches, N, L);
-    printLex(finds, uniq);
+    finds = initLex(finds, uniq, matches, size, L);
+    //printLex(finds, uniq);
 
-    string[N-1] = L[I];
-    printf("string[%d] = L[%d] = %c\n", N-1, I, L[I]);
+    string[size-1] = L[I];
+    //printf("string[%d] = L[%d] = %c\n", size-1, I, L[I]);
     int a,b,lex=1,v=I;
-    for(x=N-2; x>=0;x--){
-      printf("Symbol: %c\n", L[v]);
+    for(x=size-2; x>=0;x--){
+      //printf("Symbol: %c\n", L[v]);
       a = matches[v];
       b = findLess(L[v], finds, uniq);
-      printf("a: %d b: %d\n", a,b);
+    //  printf("a: %d b: %d\n", a,b);
       v=a+b;
       string[x] = L[v];
     }
-    for(x=0; x<N; x++)
-      fputc(string[x],output);
+    for(x=0; x<size; x++)
+      fwrite(&string[x], sizeof(char), 1, output);
 
   free(matches);
   free(L);
@@ -136,6 +150,13 @@ void RBWT(int N, char* infile, char* outfile){
   }
   fclose(output);
   fclose(input);
+}
+int cmp(char* p1, char* p2, int len){
+  int x, success = 0;
+  for(x=0; x< len; x++)
+    if(p1[x] != p2[x])
+      return -1;
+  return success;
 }
 
 int findUniq(int* matches, int size){

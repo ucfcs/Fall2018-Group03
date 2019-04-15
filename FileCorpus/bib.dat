@@ -23,7 +23,7 @@
 %J IEEE Trans Acoustics, Speech and Signal Processing
 %V Acoustics, Speech, and Signal Processing -30
 %N 3
-%P 423-435 
+%P 423-435
 %O June
 %K *
 
@@ -75,7 +75,7 @@
 %T Intonation in text-to-speech synthesis: evaluation of algorithms
 %R Report
 %I Bell-Northern Research
-%C Verdun, QUE 
+%C Verdun, QUE
 %K *
 
 %A Allebach, J.P.
@@ -580,7 +580,7 @@
 %O November
 %K *
 
-%A Biederman, I. 
+%A Biederman, I.
 %D 1985
 %T Human image understanding: recent research and a theory
 %J Computer Vision, Graphics, and Image Processing
@@ -1782,7 +1782,7 @@ TJ IEEE Trans Information Theory
 %A Bernal, M.
 %D 1982
 %T Officetalk-D: an experimental office information system
-%J Proc ACM Conference 
+%J Proc ACM Conference
 %P 131-140
 %K *
 
@@ -2085,7 +2085,7 @@ TJ IEEE Trans Information Theory
 %D 1980
 %T Human factors in office automation
 %I Life Office Management Association
-%C Atlanta, GA 
+%C Atlanta, GA
 
 %A Gardner, M.
 %T In which `monster' curves force redefinition of the word `curve'
@@ -2117,7 +2117,7 @@ TJ IEEE Trans Information Theory
 %A Gilbert, J.H.V.
 %A Benguerel, A.P.
 %T Identification of invariant acoustic cues in stop consonants using the Wigner distribution
-%J 
+%J
 %K *
 
 %A Garvey, T.D.
@@ -4361,7 +4361,7 @@ TJ IEEE Trans Information Theory
 %T Delta-Prolog: a distributed logic programming language
 %R Submitted to Int Conference on 5th Generation Systems
 %C Tokyo, Japan
-%O November 
+%O November
 %K *
 
 %A Perlman, G.
@@ -4439,7 +4439,7 @@ TJ IEEE Trans Information Theory
 %A Poritz, A.B.
 %D 1982
 %T Linear predictive hidden Markov models and the speech signal
-%J Proc 
+%J Proc
 %P 1291-1294
 %K *
 
@@ -4789,7 +4789,7 @@ TJ IEEE Trans Information Theory
 %T Equal opportunity interactive systems
 %R Report
 %I Computer Science Department, University of York
-%C York 
+%C York
 %K *
 
 %A Rychener, M.D.
@@ -5465,7 +5465,7 @@ TJ IEEE Trans Information Theory
 %T Political history of UNIX
 %R Report
 %I MASSCOMP
-%C Westford, MA 
+%C Westford, MA
 %K *
 
 %A Tanner, W.
@@ -5646,7 +5646,7 @@ TJ IEEE Trans Information Theory
 %A University\|of\|Chicago\|Press
 %D 1969
 %T A manual of style
-%I University of Chicago 
+%I University of Chicago
 
 %A Uribe, R.B.
 %D 1981
