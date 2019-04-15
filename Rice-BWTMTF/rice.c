@@ -25,9 +25,9 @@ Lex* initLex(Lex* finds, int size, int* matches, int N, char* L);
 void mtfHelper(int index, char* symbols);
 int search(char c, char* symbols);
 void MTF(char* infile, char* outfile);
-void put_bit(unsigned char b)
-void rice_code(unsigned char x, int k)
-int rice_len(unsigned char x, int k)
+void put_bit(unsigned char b);
+void rice_code(unsigned char x, int k);
+int rice_len(unsigned char x, int k);
 
 FILE *fp;
 unsigned char buff = 0;
@@ -51,6 +51,7 @@ int main(int argv, char **argc)
   BWT(argc[1], "bwt.dat");
   MTF("bwt.dat", "mtf.dat");
 
+  //Jasmine Rice
   fp = fopen("mtf.dat", "rb");
 
 
