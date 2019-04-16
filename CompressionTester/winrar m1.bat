@@ -1,1 +1,0 @@
-"C:\Program Files\WinRAR\rar.exe" a -m1 %2 %1
