@@ -32,6 +32,7 @@ int rice_len(unsigned char x, int k);
 FILE *fp;
 unsigned char buff = 0;
 int filled = 0;
+size_t cmp_size = 0;
 
 
 int main(int argv, char **argc)
@@ -105,16 +106,19 @@ void BWT(char* infile, char* outfile){
   size_t size;
   FILE *input, *output;
 
-  if((input = fopen(infile, "rb")) == NULL){}
-    ferror(input);
-  if((output = fopen(outfile, "wb")) == NULL)
-    ferror(output);
-
+  if((input = fopen(infile, "rb")) == NULL){
+	perror("Error reading input file");
+    exit(errno);
+  }
+  if((output = fopen(outfile, "wb")) == NULL){
+    perror("Error reading output file");
+    exit(errno);
+  }
 
   char original[BLOCK];
 
   int once = 0;
-  while((size = fread(original, sizeof(char), BLOCK, input)) != 0){
+  while((size = cmp_size = fread(original, sizeof(char), BLOCK, input)) != 0){
 
     char** strings = (char**)calloc(size, sizeof(char*));
     for(x=0; x<size; x++)
@@ -139,7 +143,7 @@ void BWT(char* infile, char* outfile){
     //printArr(strings, N);
 
     for(x=0; x<size; x++){
-      if(strcmp(strings[x], original)==0){
+      if(memcmp(strings[x], original, size)==0){
         I = x;
         break;
       }
@@ -297,11 +301,7 @@ void printArr(char **arr, int N){
 }
 
 int compare(const void *a, const void *b){
-  const char **pa,**pb;
-  pa = (const char **)a;
-  pb = (const char **)b;
-
-  return (strcmp(*pa, *pb));
+  return (memcmp(a, b, cmp_size)); //compare cmp_size bytes from each block of memory
 }
 
 void MTF(char* infile, char* outfile){
