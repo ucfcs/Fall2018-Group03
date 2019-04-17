@@ -11,6 +11,7 @@ typedef struct{
   char numLess;
 }Lex;
 
+int gSize = 0;
 
 void BWT(char* infile, char* outfile);
 void RBWT(char* infile, char* outfile);
@@ -22,88 +23,107 @@ int findLess(char symbol, Lex* finds, int size);
 void printLex(Lex* finds, int size);
 int findUniq(int* matches, int size);
 Lex* initLex(Lex* finds, int size, int* matches, int N, char* L);
-void mtfHelper(int index, char* symbols);
-int search(char c, char* symbols);
+void mtfHelper(int index, char* symbols, int len);
+int search(char c, char* alpha, int size);
 void MTF(char* infile, char* outfile);
-void put_bit(unsigned char b);
-void rice_code(unsigned char x, int k);
+void put_bit(unsigned char b, int *filled, unsigned char *buff, FILE *fp);
+void rice_code(unsigned char x, int k,int *filled, unsigned char *buff, FILE *fp);
 int rice_len(unsigned char x, int k);
-
-FILE *fp;
-unsigned char buff = 0;
-int filled = 0;
+void Rice(char* infile, char* outfile, char* progName);
 
 
-int main(int argv, char **argc)
-{
-	unsigned int fs, i, k, outsize, best_size = 0, best_k;
-	unsigned char *buf;
-	struct stat stat;
 
-	if (argv != 3)
-	{
-		printf("usage: %s <infile> <outfile>\n", argc[0]);
-		return 1;
-	}
+int main(int argv, char **argc){
+
+  if (argv != 3){
+    printf("usage: %s <infile> <outfile>\n", argc[0]);
+    return 1;
+  }
+
+  Rice(argc[1], argc[2], argc[0]);
+
+	return 0;
+}
+
+
+
+void Rice(char* infile, char* outfile, char* progName){
+  FILE *input,*output;
+  unsigned char buff = 0;
+  int filled = 0;
+
+  unsigned int fs, i, k, outsize, best_size = 0, best_k;
+  unsigned char *buf;//actual buffer
+  size_t length;
+
+
 
 
   /*Transformations*/
-  BWT(argc[1], "bwt.dat");
+  c
+  BWT(infile, "bwt.dat");
+  printf("BWT COMPLETE\n");
   MTF("bwt.dat", "mtf.dat");
+  printf("MTF COMPLETE\n");
 
-  fp = fopen("mtf.dat", "rb");
+  input = fopen("mtf.dat", "rb");
+  /* output */
+  output = fopen(outfile, "wb");
 
+  if(!output){
+    printf("File Not Found/Could Not be Created\n");
+  }
 
-	fstat(fileno(fp), &stat);
-	fs = (unsigned int)stat.st_size;
-
-
-	buf = (unsigned char*) malloc(fs);
-
-  fread(buf, fs, 1, fp);
-
-	fclose(fp);
-
-	/* find length */
-	for (k=0; k<8; k++)
-	{
-		fflush(stdout);
-
-		outsize = 0;
-		for (i=0; i<fs; i++)
-			outsize += rice_len(buf[i], k);
+  //input = fopen(argc[1], "rb");
 
 
-		if (!best_size || outsize < best_size)
-		{
-			best_size = outsize;
-			best_k = k;
-		}
-	}
 
-	/* output */
-	fp = fopen(argc[2], "wb");
+  buf = (unsigned char*) calloc(BLOCK,sizeof(unsigned char));//creating enough memory for fill *large files dangers
+printf("length %d\n", length);
+while((length = fread(buf,sizeof(unsigned char), BLOCK, input))){
+
+printf("length %d\n", length);
+
+  /* find length */
+  for (k=0; k<8; k++)
+  {
+    fflush(stdout);
+
+    outsize = 0;
+    for (i=0; i<length; i++)
+      outsize += rice_len(buf[i], k);
 
 
-	put_bit((best_k >> 2) & 1);
-	put_bit((best_k >> 1) & 1);
-	put_bit((best_k     ) & 1);
+    if (!best_size || outsize < best_size)
+    {
+      best_size = outsize;
+      best_k = k;
+    }
+  }
 
-	for (i=0; i<fs; i++)
-		rice_code(buf[i], best_k);
 
-	/* flush */
-	i = 8 - filled;
-	while (i--) put_bit(1);
 
-	fclose(fp);
-	free(buf);
-	return 0;
+  put_bit(((best_k >> 2) & 1), &filled, &buff, output);
+  put_bit(((best_k >> 1) & 1), &filled, &buff, output);
+  put_bit(((best_k     ) & 1), &filled, &buff, output);
+
+  for (i=0; i<length; i++)
+    rice_code(buf[i], best_k, &filled, &buff, output);
+  }
+  /* flush */
+  i = 8 - filled;
+  while (i--) put_bit(1, &filled, &buff, output);
+
+  fclose(input);
+  fclose(output);
+  free(buf);
 }
 void BWT(char* infile, char* outfile){
   short x,y, I=0;
   size_t size;
   FILE *input, *output;
+
+
 
   if((input = fopen(infile, "rb")) == NULL){}
     ferror(input);
@@ -114,7 +134,7 @@ void BWT(char* infile, char* outfile){
   char original[BLOCK];
 
   int once = 0;
-  while((size = fread(original, sizeof(char), BLOCK, input)) != 0){
+  while((size = gSize= fread(original, sizeof(char), BLOCK, input)) != 0){
 
     char** strings = (char**)calloc(size, sizeof(char*));
     for(x=0; x<size; x++)
@@ -125,13 +145,12 @@ void BWT(char* infile, char* outfile){
     fwrite(&size, sizeof(short), 1, output);
 
     //Copying read values to temp
-    for(x=0; x<size; x++)
-      temp[x] = original[x];
+    memcpy(temp, original, size);
 
     for(x=0; x<size; x++){
       cyclicRotator(1, temp, size);
-      for(y=0; y<size; y++)
-        strings[x][y] = temp[y];
+
+      memcpy(strings[x], temp, size);
     }
 
     //printArr(strings, N);
@@ -139,18 +158,22 @@ void BWT(char* infile, char* outfile){
     //printArr(strings, N);
 
     for(x=0; x<size; x++){
-      if(strcmp(strings[x], original)==0){
+      if(memcmp(strings[x], original, size)==0){
         I = x;
         break;
       }
     }
 
-    for(x=0; x<size; x++)
+    for(x=0; x<size; x++){
       fwrite(&strings[x][size-1], sizeof(char), 1, output);
+      free(strings[x]);
+    }
+    free(strings);
     fwrite(&I, sizeof(short), 1, output);
+
   }
-  // free(temp);
-  // free(strings);
+
+
   //free(original);
   fclose(output);
   fclose(input);
@@ -301,34 +324,44 @@ int compare(const void *a, const void *b){
   pa = (const char **)a;
   pb = (const char **)b;
 
-  return (strcmp(*pa, *pb));
+  return (memcmp(*pa, *pb, gSize));
 }
 
 void MTF(char* infile, char* outfile){
   short x,y, I=0;
   size_t size;
   FILE *input, *output;
-  char alpha[256];
+  char *alpha = (char*)calloc(256,sizeof(char));
   char symbols[BLOCK];
-  int out[BLOCK];
+  short out[BLOCK];
   size_t len;
 
   //creates alphabet
   for(x=0; x<256; x++)
     alpha[x] = x;
 
+
   if((input = fopen(infile, "rb")) == NULL){}
     ferror(input);
   if((output = fopen(outfile, "wb")) == NULL)
     ferror(output);
 
-    while((len = fread(symbols, sizeof(char), BLOCK, input)) > 0){
-      for(x=0; x<len; x++){
-        out[x] = search(symbols[x], alpha);//
+    while(!feof(input)){
 
-        mtfHelper(out[x], alpha);
+      len = fread(symbols, sizeof(char), BLOCK, input);
+      // printf("%d\n", len);
+      // for(x=0; x<len; x++)
+      //   printf("%c", symbols[x]);
+      // printf("\n");
+
+      for(x=0; x<len; x++){
+        out[x] = search(symbols[x], alpha, 256);
+
+        fwrite(&out[x], sizeof(char), 1, output);
+
+        mtfHelper(out[x], alpha, len);
       }
-      fwrite(out, sizeof(short), len, output);
+
     }
 
 
@@ -336,54 +369,56 @@ void MTF(char* infile, char* outfile){
   fclose(input);
 }
 
-void mtfHelper(int index, char* symbols){
+void mtfHelper(int index, char* symbols, int len){
     char* record = (char*)malloc(sizeof(char) * 256);
-    strcpy(record, symbols);
+    memcpy(record, symbols, 256);
 
     // Characters pushed one position right
     // in the list up until curr_index
-    strncpy(symbols + 1, record, index);
+    memcpy(symbols + 1, record, index);
+    memcpy(symbols + index+1, record+index+1, 256-index+1);
 
     // Character at curr_index stored at 0th position
     symbols[0] = record[index];
 }
 
-int search(char c, char* symbols){
+int search(char c, char* alpha, int size){
   int x;
-   for (x = 0; x < strlen(symbols); x++) {
-       if (symbols[x] == c) {
+
+   for (x = 0; x < size; x++) {
+       if (alpha[x] == c) {
            return x;
            break;
        }
    }
 }
 
-void put_bit(unsigned char b){
-	buff = buff | ((b & 1) << filled);
-	if (filled == 7)
+void put_bit(unsigned char b, int *filled, unsigned char *buff, FILE *fp){
+	(*buff) = (*buff) | ((b & 1) << (*filled));
+	if (*filled == 7)
 	{
-		if (!fwrite(&buff, 1, 1, fp))
+		if (!fwrite(buff, sizeof(unsigned char), 1, fp))
 		{
 			printf("\nerror writing to file!\n");
 			exit(1);
 		}
 
-		buff = 0;
-		filled = 0;
+		*buff = 0;
+		*filled = 0;
 	}
 	else
-		filled++;
+		(*filled)++;
 }
 
-void rice_code(unsigned char x, int k){
+void rice_code(unsigned char x, int k,int *filled, unsigned char *buff, FILE *fp){
 	int m = 1 << k;
 	int q = x / m;
 	int i;
 
-	for (i=0; i<q; i++) put_bit(1);
-	put_bit(0);
+	for (i=0; i<q; i++) put_bit(1, filled, buff, fp);
+	put_bit(0, filled, buff, fp);
 
-	for (i=k-1; i>=0; i--) put_bit( (x >> i) & 1 );
+	for (i=k-1; i>=0; i--) put_bit( ((x >> i) & 1), filled, buff, fp );
 }
 
 int rice_len(unsigned char x, int k){

@@ -1,2 +1,2 @@
 #:name Jasmine Rice
-"Rice/jrice.exe" <input> <output>
+"Rice/rice.exe" <input> <output>
