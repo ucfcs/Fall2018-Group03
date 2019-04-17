@@ -4,7 +4,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define BLOCK 64
+#define BLOCK 8192
 
 typedef struct{
   char symbol;
@@ -60,7 +60,6 @@ void Rice(char* infile, char* outfile, char* progName){
 
 
   /*Transformations*/
-  c
   BWT(infile, "bwt.dat");
   printf("BWT COMPLETE\n");
   MTF("bwt.dat", "mtf.dat");
@@ -79,7 +78,6 @@ void Rice(char* infile, char* outfile, char* progName){
 
 
   buf = (unsigned char*) calloc(BLOCK,sizeof(unsigned char));//creating enough memory for fill *large files dangers
-printf("length %d\n", length);
 while((length = fread(buf,sizeof(unsigned char), BLOCK, input))){
 
 printf("length %d\n", length);
@@ -100,7 +98,6 @@ printf("length %d\n", length);
       best_k = k;
     }
   }
-
 
 
   put_bit(((best_k >> 2) & 1), &filled, &buff, output);
@@ -336,9 +333,7 @@ void MTF(char* infile, char* outfile){
   short out[BLOCK];
   size_t len;
 
-  //creates alphabet
-  for(x=0; x<256; x++)
-    alpha[x] = x;
+
 
 
   if((input = fopen(infile, "rb")) == NULL){}
@@ -346,9 +341,11 @@ void MTF(char* infile, char* outfile){
   if((output = fopen(outfile, "wb")) == NULL)
     ferror(output);
 
-    while(!feof(input)){
+    while(len = fread(symbols, sizeof(char), BLOCK, input)){
+      //creates alphabet
+      for(x=0; x<256; x++)
+        alpha[x] = x;
 
-      len = fread(symbols, sizeof(char), BLOCK, input);
       // printf("%d\n", len);
       // for(x=0; x<len; x++)
       //   printf("%c", symbols[x]);
@@ -364,7 +361,7 @@ void MTF(char* infile, char* outfile){
 
     }
 
-
+  free(alpha);
   fclose(output);
   fclose(input);
 }
@@ -380,6 +377,7 @@ void mtfHelper(int index, char* symbols, int len){
 
     // Character at curr_index stored at 0th position
     symbols[0] = record[index];
+    free(record);
 }
 
 int search(char c, char* alpha, int size){
