@@ -301,7 +301,7 @@ void printArr(char **arr, int N){
 }
 
 int compare(const void *a, const void *b){
-  return (memcmp(a, b, cmp_size)); //compare cmp_size bytes from each block of memory
+  return (memcmp(*(char**)a, *(char**)b, cmp_size)); //compare cmp_size bytes from each block of memory
 }
 
 void MTF(char* infile, char* outfile){
@@ -310,7 +310,7 @@ void MTF(char* infile, char* outfile){
   FILE *input, *output;
   char alpha[ALPHA_LEN];
   char symbols[BLOCK];
-  int out[BLOCK];
+  short out[BLOCK];
   size_t len;
 
   //creates alphabet
@@ -327,7 +327,7 @@ void MTF(char* infile, char* outfile){
 
     while((len = fread(symbols, sizeof(char), BLOCK, input)) > 0){
       for(x=0; x<len; x++){
-        out[x] = search(symbols[x], alpha);//
+        out[x] = (short)search(symbols[x], alpha); //Index is an int, but out wants to have 2-byte numbers
 
         mtfHelper(out[x], alpha);
       }
