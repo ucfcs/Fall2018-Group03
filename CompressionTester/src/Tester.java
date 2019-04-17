@@ -50,25 +50,29 @@ public class Tester {
 		File programList = new File(progPath), input = new File(inputPath), output = new File(outputPath);
 
 		if(!programList.exists()){
-			throw new FileNotFoundException("Program file \""+progPath+"\"\ndoes not exist.");
+			exit("Program file \""+progPath+"\"\ndoes not exist.");
 		}
 		if(!programList.canRead()){
-			throw new IOException("Cannot read program file \""+progPath+"\".");
+			exit("Cannot read program file \""+progPath+"\".");
 		}
 		if(!input.exists()){
-			throw new FileNotFoundException("Input directory does not exist");
+			exit("Input directory does not exist");
 		}
 		if(!input.isDirectory()){
-			throw new IllegalArgumentException("Input must be directory");
+			exit("Input must be directory");
 		}
 		if(!output.exists() && !output.mkdir()){
-			throw new IOException("Could not create output directory");
+			exit("Could not create output directory");
 		}
 		if(!output.isDirectory()){
-			throw new IllegalArgumentException("Output must be directory");
+			exit("Output must be directory");
 		}
-
-		openCSV("results.csv");
+		
+		try{
+			openCSV("results.csv");
+		}catch(IOException e){
+			exit("Could not create results file "+e.getMessage());
+		}
 		
 		Scanner in = new Scanner(programList);
 		int line;
@@ -80,7 +84,7 @@ public class Tester {
 			if(baseCmd.length()==0) //line is blank or a comment
 				continue;
 			
-			if(progName==null)
+			if(progName==null) //global varible set by the parse function
 				progName = baseCmd;
 			
 			if(!baseCmd.contains("<input>") || !baseCmd.contains("<output>")){
@@ -89,7 +93,7 @@ public class Tester {
 				continue;
 			}
 			
-			System.out.printf("Running testbench line %d:\n%s\n%s\n\n",line,baseCmd,progName==null ? "(No name)" : ("Name: "+progName));
+			System.out.printf("Running line %d:\n%s\n%s\n\n",line,baseCmd,progName==null ? "(No name)" : ("Name: "+progName));
 			
 			double avg = 0.0, avgTime = 0.0;
 			int successCount = 0;
@@ -106,8 +110,7 @@ public class Tester {
 					try{
 						Files.delete(out.toPath()); //Files.delete throws an exception when it can't be deleted! I want that.
 					}catch(IOException e){
-						System.out.println("Could not delete old output file; "+e.getMessage());
-						System.exit(1);
+						exit("Could not delete existing output file: "+e.getMessage());
 					}
 				}
 				
@@ -148,7 +151,7 @@ public class Tester {
 					writeToCSV(progName, f.getName(), originalSize, compressedSize, time);
 					
 					//System.out.println("Compressed size: "+humanReadableByteCount(compressedSize,false));
-					System.out.printf("Compression ratio: %.3f\n",ratio);
+					//System.out.println("("+compressedSize+")");
 					System.out.println("Time: "+humanReadableDuration(time));
 					System.out.printf("Ratio: %.3f\n",ratio);
 				}else{
@@ -174,6 +177,8 @@ public class Tester {
 	public static void gobble(InputStream input) throws IOException{
 		BufferedReader in = new BufferedReader(new InputStreamReader(input));
 		while(in.readLine()!=null);
+		//for(String line;(line=in.readLine())!=null;)
+		//	System.out.println("STDOUT > "+line);
 	}
 	
 	public static String clamp(String str){
@@ -184,7 +189,7 @@ public class Tester {
 	}
 	
 	public static String parse(String str){
-		int octoIndex = str.indexOf('#'); //it's an octothorpe, you fucking idiot
+		int octoIndex = str.indexOf('#'); //Index of octopus. I mean, octothorpe.
 		String cmd = str, comment = "";
 		if(octoIndex>=0){
 			cmd = str.substring(0,octoIndex);
@@ -258,6 +263,11 @@ public class Tester {
 			openCSV("results.csv");
 		csvWriter.write(program+","+fileName+","+humanReadableByteCount(originalSize,false)+","+humanReadableByteCount(compressedSize,false)+","+((double)originalSize/compressedSize)+","+
 				humanReadableDuration(time)+","+time+"\n");
+	}
+	
+	static void exit(String msg){
+		System.err.println(msg);
+		System.exit(1);
 	}
 	
 }
