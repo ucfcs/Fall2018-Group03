@@ -1,2 +1,0 @@
-#:name Jasmine Rice
-"Rice/rice.exe" <input> <output>

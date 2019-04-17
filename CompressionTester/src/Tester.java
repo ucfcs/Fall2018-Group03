@@ -1,10 +1,10 @@
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.util.Scanner;
 
@@ -124,9 +124,15 @@ public class Tester {
 				
 				Process p = Runtime.getRuntime().exec(cmd);
 				long time = -System.currentTimeMillis();
+				
+				ProcessKiller hook = new ProcessKiller(p);  //Register a hook to shut p down when the main thread exits.
+				Runtime.getRuntime().addShutdownHook(hook); //It's super unreliable!
 				gobble(p.getInputStream()); //might need to gobble p.getErrorStream() as well.
+				
 				p.waitFor(); //This is a top-level concurrent programming technique. Don't even ATTEMPT to understand it.
 				time += System.currentTimeMillis();
+				
+				Runtime.getRuntime().removeShutdownHook(hook);
 				
 				if(p.exitValue()!=0){
 					System.out.printf("Runtime error (%d) encountered when compressing %s!\n",p.exitValue(),f.getName());
@@ -270,6 +276,17 @@ public class Tester {
 		System.exit(1);
 	}
 	
+	static class ProcessKiller extends Thread{
+		Process p;
+		public ProcessKiller(Process p){
+			super();
+			this.p = p;
+		}
+		public void run(){
+			System.out.println("Terminating subprocess...");
+			p.destroyForcibly();
+		}
+	}
+	
 }
-
 
