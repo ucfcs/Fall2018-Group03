@@ -24,7 +24,7 @@ int findLess(char symbol, Lex* finds, int size);
 void printLex(Lex* finds, int size);
 int findUniq(int* matches, int size);
 Lex* initLex(Lex* finds, int size, int* matches, int N, char* L);
-void mtfHelper(int index, char* symbols, int len);
+void mtfHelper(int index, char* symbols);
 int search(char c, char* alpha, int size);
 void MTF(char* infile, char* outfile);
 void put_bit(unsigned char b, int *filled, unsigned char *buff, FILE *fp);
@@ -350,7 +350,7 @@ void MTF(char* infile, char* outfile){
       for(x=0; x<len; x++){
         out[x] = search(symbols[x], alpha, ALPHA_LEN);
         fwrite(&out[x], sizeof(char), 1, output);
-        mtfHelper(out[x], alpha, len);
+        mtfHelper(out[x], alpha);
       }
 
     }
