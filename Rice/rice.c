@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #define BLOCK 8192
+#define ALPHA_LEN 256
 
 typedef struct{
   char symbol;
@@ -125,7 +126,7 @@ void BWT(char* infile, char* outfile){
     exit(errno);
   }
   if((output = fopen(outfile, "wb")) == NULL){
-    perror("Error reading output file");
+    perror("Error writing output file");
     exit(errno);
   }
 
@@ -171,8 +172,6 @@ void BWT(char* infile, char* outfile){
 
   }
 
-
-  //free(original);
   fclose(output);
   fclose(input);
 }
@@ -236,9 +235,7 @@ void RBWT(char* infile, char* outfile){
     for(x=0; x<size; x++)
       fwrite(&string[x], sizeof(char), 1, output);
 
-  free(matches);
-  free(L);
-  free(string);
+	free(matches);
   }
   fclose(output);
   fclose(input);
@@ -327,18 +324,18 @@ void MTF(char* infile, char* outfile){
   short x,y, I=0;
   size_t size;
   FILE *input, *output;
-  char *alpha = (char*)calloc(256,sizeof(char));
+  char *alpha = (char*)calloc(ALPHA_LEN,sizeof(char));
   char symbols[BLOCK];
   short out[BLOCK];
   size_t len;
 
-
-
-
-  if((input = fopen(infile, "rb")) == NULL){}
-    ferror(input);
-  if((output = fopen(outfile, "wb")) == NULL)
-    ferror(output);
+  if((input = fopen(infile, "rb")) == NULL){
+    perror("Error reading input file");
+    exit(errno);
+  }if((output = fopen(outfile, "wb")) == NULL){
+    perror("Error writing output file");
+    exit(errno);
+  }
 
     while(len = fread(symbols, sizeof(char), BLOCK, input)){
       //creates alphabet
@@ -351,10 +348,8 @@ void MTF(char* infile, char* outfile){
       // printf("\n");
 
       for(x=0; x<len; x++){
-        out[x] = search(symbols[x], alpha, 256);
-
+        out[x] = search(symbols[x], alpha, ALPHA_LEN);
         fwrite(&out[x], sizeof(char), 1, output);
-
         mtfHelper(out[x], alpha, len);
       }
 
@@ -365,14 +360,14 @@ void MTF(char* infile, char* outfile){
   fclose(input);
 }
 
-void mtfHelper(int index, char* symbols, int len){
-    char* record = (char*)malloc(sizeof(char) * 256);
-    memcpy(record, symbols, 256);
+void mtfHelper(int index, char* symbols){
+    char* record = (char*)malloc(sizeof(char) * ALPHA_LEN);
+    memcpy(record, symbols, ALPHA_LEN);
 
     // Characters pushed one position right
     // in the list up until curr_index
     memcpy(symbols + 1, record, index);
-    memcpy(symbols + index+1, record+index+1, 256-index+1);
+    memcpy(symbols + index+1, record+index+1, ALPHA_LEN-index+1);
 
     // Character at curr_index stored at 0th position
     symbols[0] = record[index];
@@ -381,13 +376,12 @@ void mtfHelper(int index, char* symbols, int len){
 
 int search(char c, char* alpha, int size){
   int x;
-
    for (x = 0; x < size; x++) {
        if (alpha[x] == c) {
            return x;
-           break;
        }
    }
+   printf("If you are reading this, search is returning unitialized memory.\n");
 }
 
 void put_bit(unsigned char b, int *filled, unsigned char *buff, FILE *fp){
