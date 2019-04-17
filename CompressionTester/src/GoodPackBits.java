@@ -57,13 +57,16 @@ public class GoodPackBits{
 		
 		int i;
 		for(i=0;i<args.length;i++){
+			if(args[i].charAt(0)!='-')
+				break;
 			if(args[i].equals("-nopless")){
 				System.out.println("Running nopless PackBits...");
-				TRUE_PACKBITS = true;
-			}else{
-				System.out.println("Running true PackBits...");
-				break;
+				TRUE_PACKBITS = false;
 			}
+		}
+		
+		if(TRUE_PACKBITS){
+			System.out.println("Running true PackBits...");
 		}
 		
 		if(args.length-i!=2){

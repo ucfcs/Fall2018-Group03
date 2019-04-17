@@ -151,6 +151,7 @@ public class Tester {
 					writeToCSV(progName, f.getName(), originalSize, compressedSize, time);
 					
 					//System.out.println("Compressed size: "+humanReadableByteCount(compressedSize,false));
+					//System.out.println("("+compressedSize+")");
 					System.out.println("Time: "+humanReadableDuration(time));
 					System.out.printf("Ratio: %.3f\n",ratio);
 				}else{
@@ -176,6 +177,8 @@ public class Tester {
 	public static void gobble(InputStream input) throws IOException{
 		BufferedReader in = new BufferedReader(new InputStreamReader(input));
 		while(in.readLine()!=null);
+		//for(String line;(line=in.readLine())!=null;)
+		//	System.out.println("STDOUT > "+line);
 	}
 	
 	public static String clamp(String str){
