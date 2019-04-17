@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #define BLOCK 64
+#define ALPHA_LEN 256
 
 typedef struct{
   char symbol;
@@ -152,10 +153,11 @@ void BWT(char* infile, char* outfile){
     for(x=0; x<size; x++)
       fwrite(&strings[x][size-1], sizeof(char), 1, output);
     fwrite(&I, sizeof(short), 1, output);
+	
+	for(x=0; x<size; x++)
+		free(strings[x]);
+	free(strings);
   }
-  // free(temp);
-  // free(strings);
-  //free(original);
   fclose(output);
   fclose(input);
 }
@@ -219,9 +221,7 @@ void RBWT(char* infile, char* outfile){
     for(x=0; x<size; x++)
       fwrite(&string[x], sizeof(char), 1, output);
 
-  free(matches);
-  free(L);
-  free(string);
+	free(matches);
   }
   fclose(output);
   fclose(input);
@@ -308,19 +308,22 @@ void MTF(char* infile, char* outfile){
   short x,y, I=0;
   size_t size;
   FILE *input, *output;
-  char alpha[256];
+  char alpha[ALPHA_LEN];
   char symbols[BLOCK];
   int out[BLOCK];
   size_t len;
 
   //creates alphabet
-  for(x=0; x<256; x++)
+  for(x=0; x<ALPHA_LEN; x++)
     alpha[x] = x;
 
-  if((input = fopen(infile, "rb")) == NULL){}
-    ferror(input);
-  if((output = fopen(outfile, "wb")) == NULL)
-    ferror(output);
+  if((input = fopen(infile, "rb")) == NULL){
+    perror("Error reading input file");
+    exit(errno);
+  }if((output = fopen(outfile, "wb")) == NULL){
+    perror("Error reading output file");
+    exit(errno);
+  }
 
     while((len = fread(symbols, sizeof(char), BLOCK, input)) > 0){
       for(x=0; x<len; x++){
@@ -337,25 +340,26 @@ void MTF(char* infile, char* outfile){
 }
 
 void mtfHelper(int index, char* symbols){
-    char* record = (char*)malloc(sizeof(char) * 256);
-    strcpy(record, symbols);
+    char* record = (char*)malloc(sizeof(char) * ALPHA_LEN);
+    memcpy(record, symbols, ALPHA_LEN);
 
     // Characters pushed one position right
     // in the list up until curr_index
-    strncpy(symbols + 1, record, index);
+    memcpy(symbols + 1, record, index);
 
     // Character at curr_index stored at 0th position
     symbols[0] = record[index];
+	free(record);
 }
 
 int search(char c, char* symbols){
   int x;
-   for (x = 0; x < strlen(symbols); x++) {
+   for (x = 0; x < ALPHA_LEN; x++) {
        if (symbols[x] == c) {
            return x;
-           break;
        }
    }
+   printf("If you are reading this, search is returning unitialized memory.\n");
 }
 
 void put_bit(unsigned char b){
