@@ -80,7 +80,7 @@ void Rice(char* infile, char* outfile, char* progName){
   buf = (unsigned char*) calloc(BLOCK,sizeof(unsigned char));//creating enough memory for fill *large files dangers
 while((length = fread(buf,sizeof(unsigned char), BLOCK, input))){
 
-printf("length %d\n", length);
+//printf("length %d\n", length);
 
   /* find length */
   for (k=0; k<8; k++)
@@ -318,7 +318,9 @@ void printArr(char **arr, int N){
 }
 
 int compare(const void *a, const void *b){
-  return (memcmp(a, b, cmp_size)); //compare cmp_size bytes from each block of memory
+  const char **p = (const char**)a;
+  const char **s = (const char**)b;
+  return (memcmp(*p, *s, cmp_size)); //compare cmp_size bytes from each block of memory
 }
 
 void MTF(char* infile, char* outfile){
