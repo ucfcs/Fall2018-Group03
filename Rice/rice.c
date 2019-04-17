@@ -112,7 +112,7 @@ void BWT(char* infile, char* outfile){
     exit(errno);
   }
   if((output = fopen(outfile, "wb")) == NULL){
-    perror("Error reading output file");
+    perror("Error writing output file");
     exit(errno);
   }
 
@@ -321,7 +321,7 @@ void MTF(char* infile, char* outfile){
     perror("Error reading input file");
     exit(errno);
   }if((output = fopen(outfile, "wb")) == NULL){
-    perror("Error reading output file");
+    perror("Error writing output file");
     exit(errno);
   }
 
