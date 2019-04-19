@@ -167,7 +167,7 @@ public class Tester {
 			}
 			
 			System.out.println("Done.\n");
-			System.out.printf("Average smallness increasment factor: %.3f\n\n\n", avg/successCount);
+			System.out.printf("Average smallness increasement factor: %.3f\n\n\n", avg/successCount);
 			writeToCSV(progName, avg/successCount, avgTime/successCount);
 			progName = null;
 			
