@@ -240,7 +240,7 @@ public class Tester {
 		if(t<1000)
 			return t+" ms";
 		if(t<60000)
-			return String.format("%d.%d s" , t/1000, t%1000);
+			return String.format("%d.%03d s" , t/1000, t%1000);
 		return String.format("%d m %d s", t/60000, (t%60000)/1000);
 	}
 	
