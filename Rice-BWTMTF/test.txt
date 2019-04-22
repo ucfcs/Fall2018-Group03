@@ -1,2 +1,0 @@
-#:name EOF tests
-"Rice-BWTMTF/b.exe" <input> <output>
